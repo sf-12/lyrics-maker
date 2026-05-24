@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lyrics Maker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🎵 Lyrics Maker</h1>
+    <div class="header-stats">
+      <div class="stat">全曲: <strong id="stat-total">0</strong></div>
+      <div class="stat">未使用: <strong id="stat-unused">0</strong></div>
+      <div class="stat">投稿済: <strong id="stat-posted">0</strong></div>
+    </div>
+  </header>
+
+  <div class="app-body">
+
+    <nav class="app-nav">
+      <button class="nav-item active" data-view="songs">
+        <span class="nav-icon">🎵</span>
+        <span class="nav-label">曲管理</span>
+      </button>
+      <button class="nav-item" data-view="request">
+        <span class="nav-icon">✏️</span>
+        <span class="nav-label">作曲依頼</span>
+      </button>
+      <button class="nav-item" data-view="phrases">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">フレーズ</span>
+      </button>
+    </nav>
+
+    <!-- 曲管理 -->
+    <div class="view" id="view-songs">
+      <div class="sidebar">
+        <div class="sidebar-toolbar">
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">すべて</button>
+            <button class="filter-btn" data-filter="unused">未使用</button>
+            <button class="filter-btn" data-filter="posted">投稿済み</button>
+          </div>
+          <input class="search-box" type="text" placeholder="検索..." id="search-input">
+          <button class="new-playlist-btn" onclick="showNewPlaylistInput()">＋ 新規リスト</button>
+        </div>
+        <div class="song-list" id="song-list"></div>
+      </div>
+      <div class="detail" id="detail">
+        <div class="detail-empty">曲を選択してください</div>
+      </div>
+    </div>
+
+    <!-- 作曲依頼 -->
+    <div class="view hidden" id="view-request">
+      <div class="request-form">
+        <h2 class="request-title">作曲依頼文を生成</h2>
+
+        <div class="form-row">
+          <label class="form-label">曲数</label>
+          <div class="count-group">
+            <button class="count-btn active" data-value="1">1</button>
+            <button class="count-btn" data-value="3">3</button>
+            <button class="count-btn" data-value="5">5</button>
+            <button class="count-btn" data-value="10">10</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">テーマ / 世界観</label>
+          <input class="form-input" id="req-theme" placeholder="例: 夏・海・青春、都会の夜、和風ファンタジー">
+          <div class="theme-tags" id="req-theme-tags"></div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">ムード</label>
+          <div class="theme-tags" id="req-mood-tags"></div>
+          <input class="form-input" id="req-mood" placeholder="その他のムード...">
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">ジャンル / スタイル</label>
+          <div class="theme-tags" id="req-genre-tags"></div>
+          <input class="form-input" id="req-genre" placeholder="その他のジャンル...">
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">スタイルテンプレ</label>
+          <select class="form-select" id="req-style-template">
+            <option value="-1">指定なし（自由生成）</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">言語バランス</label>
+          <div class="intro-outro-row">
+            <button class="io-btn active" data-group="lang-mode" data-value="auto">お任せ</button>
+            <button class="io-btn" data-group="lang-mode" data-value="custom">指定する</button>
+          </div>
+          <div id="lang-custom-area" style="display:none">
+            <div class="lang-slider-row">
+              <div class="lang-pct-input">
+                <input type="number" id="req-ja-pct" min="0" max="100" value="90" class="pct-input">
+                <span class="pct-label">% 日本語</span>
+              </div>
+              <input type="range" id="req-lang-slider" min="0" max="100" value="90" class="lang-slider">
+              <div class="lang-pct-input">
+                <input type="number" id="req-en-pct" min="0" max="100" value="10" class="pct-input">
+                <span class="pct-label">% 英語</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">曲の構成</label>
+          <div class="intro-outro-row">
+            <button class="io-btn active" data-group="struct-mode" data-value="auto">お任せ</button>
+            <button class="io-btn" data-group="struct-mode" data-value="custom">指定する</button>
+          </div>
+          <div id="struct-custom-area" style="display:none">
+            <select class="form-select" id="req-structure-template" onchange="applyStructureTemplate(this.value)">
+              <option value="">テンプレートから読み込み...</option>
+            </select>
+            <div class="section-palette" id="section-palette"></div>
+            <div class="structure-sequence" id="structure-sequence">
+              <div class="structure-empty">↑ セクションをクリックして追加</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">イントロ / アウトロ</label>
+          <div class="intro-outro-row">
+            <span class="io-label">Intro</span>
+            <button class="io-btn active" data-group="intro" data-value="no">なし</button>
+            <button class="io-btn" data-group="intro" data-value="yes">あり</button>
+            <span class="io-divider"></span>
+            <span class="io-label">Outro</span>
+            <button class="io-btn active" data-group="outro" data-value="no">なし</button>
+            <button class="io-btn" data-group="outro" data-value="yes">あり</button>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">歌詞に入れるフレーズ</label>
+          <input class="form-input" id="req-include-phrases" placeholder="例: にゃんにゃん、ゴロゴロ（カンマ区切り）">
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">入れないフレーズ</label>
+          <input class="form-input" id="req-exclude-phrases" placeholder="例: 死、別れ（カンマ区切り）">
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">追加の要望</label>
+          <textarea class="form-textarea" id="req-extra" placeholder="例: サビは英語で、Aメロは日本語で。テンポ速め。タイトルは日本語/英語の両方を含める。"></textarea>
+        </div>
+
+        <div class="form-row">
+          <label class="form-label">追加先リスト</label>
+          <select class="form-select" id="req-playlist">
+            <option value="">なし（未分類）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="request-output">
+        <div class="output-header">
+          <span class="form-label">生成された依頼文</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+        <textarea class="prompt-output" id="prompt-output" readonly></textarea>
+      </div>
+    </div>
+
+    <!-- フレーズ管理 -->
+    <div class="view hidden" id="view-phrases">
+    <div class="sidebar">
+      <div class="sidebar-toolbar">
+        <div class="filter-group">
+          <button class="filter-btn active" data-phrase-filter="all">すべて</button>
+          <button class="filter-btn" data-phrase-filter="unused">未使用</button>
+          <button class="filter-btn" data-phrase-filter="used">使用済み</button>
+          <button class="filter-btn" data-phrase-filter="fav">⭐</button>
+        </div>
+        <input class="search-box" type="text" placeholder="検索..." id="phrase-search-input">
+        <div class="phrase-add-btns">
+          <button class="new-playlist-btn" onclick="newPhrase()">＋ 新規</button>
+          <button class="new-playlist-btn ai-gen-btn" onclick="showPhraseGenerateArea()">AI生成</button>
+        </div>
+      </div>
+      <div class="phrase-list" id="phrase-list"></div>
+    </div>
+    <div class="detail" id="phrase-detail">
+      <div class="detail-empty">← 新規ボタンか生成プロンプトからフレーズを追加</div>
+    </div>
+  </div>
+
+  </div><!-- /app-body -->
+
+  <div class="toast" id="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

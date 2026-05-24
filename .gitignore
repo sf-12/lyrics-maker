@@ -1,0 +1,9 @@
+# データベース（ローカルデータは共有しない）
+songs.db
+songs.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
