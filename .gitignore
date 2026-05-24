@@ -1,5 +1,4 @@
-# データベース（ローカルデータは共有しない）
-songs.db
+# Python
 songs.json
 
 # Python
